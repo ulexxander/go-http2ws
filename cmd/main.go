@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/websocket"
+	"github.com/ulexxander/go-http2ws"
 )
 
 func main() {
@@ -68,8 +69,8 @@ func run() error {
 		return fmt.Errorf("parsing headers: %v", err)
 	}
 
-	p := Proxy{
-		TargetOpts: TargetOpts{
+	p := http2ws.Proxy{
+		TargetOpts: http2ws.TargetOpts{
 			Method:  args.targetMethod,
 			URL:     args.targetURL,
 			Headers: headers,

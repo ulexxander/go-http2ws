@@ -1,4 +1,4 @@
-package main
+package http2ws_test
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/ulexxander/go-http2ws"
 )
 
 func TestProxy(t *testing.T) {
@@ -28,8 +29,8 @@ func TestProxy(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	p := Proxy{
-		TargetOpts: TargetOpts{
+	p := http2ws.Proxy{
+		TargetOpts: http2ws.TargetOpts{
 			Method: "GET",
 			URL:    targetServ.URL,
 		},
