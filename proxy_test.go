@@ -2,6 +2,7 @@ package http2ws_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -43,16 +44,20 @@ func TestProxy(t *testing.T) {
 	assertStatusCode(t, res, 101)
 	defer conn.Close()
 
-	err = conn.WriteJSON(msg)
-	assertNoError(t, err, "writing json payload")
+	for i := 0; i < 3; i++ {
+		t.Run(fmt.Sprintf("message %d", i), func(t *testing.T) {
+			err := conn.WriteJSON(msg)
+			assertNoError(t, err, "writing json payload")
 
-	select {
-	case result := <-targetChan:
-		if result.Hello != msg.Hello {
-			t.Fatalf("expected result.Hello to be %s, got: %s", msg.Hello, result.Hello)
-		}
-	case <-time.After(time.Second):
-		t.Fatalf("not proxied in one second")
+			select {
+			case result := <-targetChan:
+				if result.Hello != msg.Hello {
+					t.Fatalf("expected result.Hello to be %s, got: %s", msg.Hello, result.Hello)
+				}
+			case <-time.After(time.Second):
+				t.Fatalf("not proxied in one second")
+			}
+		})
 	}
 }
 
