@@ -1,4 +1,4 @@
-module http-to-ws-proxy
+module github.com/ulexxander/go-http2ws
 
 go 1.17
 
