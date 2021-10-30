@@ -70,3 +70,39 @@ func TestParseHeaders(t *testing.T) {
 		})
 	}
 }
+
+func TestSplitEscaped(t *testing.T) {
+	tt := []struct {
+		s        string
+		sep, esc rune
+		splitted []string
+	}{
+		{
+			s:        "",
+			sep:      ',',
+			esc:      '\\',
+			splitted: []string{},
+		},
+		{
+			s:        "1,2,3",
+			sep:      ',',
+			esc:      '\\',
+			splitted: []string{"1", "2", "3"},
+		},
+		{
+			s:        "1,2\\,3",
+			sep:      ',',
+			esc:      '\\',
+			splitted: []string{"1", "2,3"},
+		},
+	}
+	for _, tc := range tt {
+		name := fmt.Sprintf("s=%s sep=%s esc=%s", tc.s, string(tc.sep), string(tc.esc))
+		t.Run(name, func(t *testing.T) {
+			result := splitEscaped(tc.s, tc.sep, tc.esc)
+			if !reflect.DeepEqual(result, tc.splitted) {
+				t.Fatalf("expected %v, got: %v", tc.splitted, result)
+			}
+		})
+	}
+}
