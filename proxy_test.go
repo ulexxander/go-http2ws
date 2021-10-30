@@ -13,7 +13,7 @@ import (
 	"github.com/ulexxander/go-http2ws"
 )
 
-func TestProxy(t *testing.T) {
+func TestProxingMessages(t *testing.T) {
 	type message struct {
 		Hello string
 	}
@@ -29,6 +29,7 @@ func TestProxy(t *testing.T) {
 		targetChan <- body
 		w.WriteHeader(http.StatusOK)
 	}))
+	defer targetServ.Close()
 
 	p := http2ws.Proxy{
 		TargetOpts: http2ws.TargetOpts{
@@ -58,6 +59,49 @@ func TestProxy(t *testing.T) {
 				t.Fatalf("not proxied in one second")
 			}
 		})
+	}
+}
+
+func TestHeaders(t *testing.T) {
+	targetChan := make(chan http.Header)
+
+	targetServ := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		targetChan <- r.Header
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer targetServ.Close()
+
+	headerKey := "Authorization"
+	headerVal := "Basic 123"
+
+	p := http2ws.Proxy{
+		TargetOpts: http2ws.TargetOpts{
+			Method: "GET",
+			URL:    targetServ.URL,
+			Headers: map[string]string{
+				headerKey: headerVal,
+			},
+		},
+	}
+	proxyServ := httptest.NewServer(&p)
+	defer proxyServ.Close()
+
+	conn, res, err := websocket.DefaultDialer.Dial(httpToWs(proxyServ.URL), nil)
+	assertNoError(t, err, "dialing")
+	assertStatusCode(t, res, 101)
+	defer conn.Close()
+
+	err = conn.WriteMessage(websocket.TextMessage, []byte("hello"))
+	assertNoError(t, err, "writing text message")
+
+	select {
+	case headers := <-targetChan:
+		v := headers.Get(headerKey)
+		if v != headerVal {
+			t.Fatalf("expected header value to be %s, got: %s", headerVal, v)
+		}
+	case <-time.After(time.Second):
+		t.Fatalf("not proxied in one second")
 	}
 }
 
