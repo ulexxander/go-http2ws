@@ -46,6 +46,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		response, err := p.request(payload)
 		if err != nil {
+			p.Printf("error proxying: %v", err)
 			response = []byte(err.Error())
 		}
 		if err := conn.WriteMessage(websocket.TextMessage, response); err != nil {
