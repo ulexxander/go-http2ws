@@ -23,7 +23,7 @@ p := http2ws.Proxy{
     },
   },
   Log: log.Default(),
-  Upgrader: websocket.Upgrader{
+  WSUpgrader: websocket.Upgrader{
     // allow all origins
     CheckOrigin: func(r *http.Request) bool { return true },
   },

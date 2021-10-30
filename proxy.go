@@ -19,12 +19,12 @@ type TargetOpts struct {
 type Proxy struct {
 	TargetOpts TargetOpts
 	Log        *log.Logger
-	Upgrader   websocket.Upgrader
+	WSUpgrader websocket.Upgrader
 	HTTPClient http.Client
 }
 
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	conn, err := p.Upgrader.Upgrade(w, r, nil)
+	conn, err := p.WSUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		p.Printf("failed to upgrade connection: %v", err)
 		return

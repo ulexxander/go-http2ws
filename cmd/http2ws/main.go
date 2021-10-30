@@ -76,7 +76,7 @@ func run() error {
 			Headers: headers,
 		},
 		Log: log.Default(),
-		Upgrader: websocket.Upgrader{
+		WSUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool { return true },
 		},
 	}
