@@ -25,7 +25,7 @@ func TestParseHeaders(t *testing.T) {
 	}{
 		{
 			arg:     "",
-			headers: headers{},
+			headers: nil,
 		},
 		{
 			arg: "Content-Type:application/json",
@@ -42,6 +42,12 @@ func TestParseHeaders(t *testing.T) {
 			headers: headers{
 				"Host":       "developer.mozilla.org",
 				"Connection": "keep-alive",
+			},
+		},
+		{
+			arg: `Referer:https\://developer.mozilla.org/testpage.html`,
+			headers: headers{
+				"Referer": "https://developer.mozilla.org/testpage.html",
 			},
 		},
 	}

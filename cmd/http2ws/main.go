@@ -93,16 +93,16 @@ const headersSeparator = ","
 
 func parseHeaders(arg string) (map[string]string, error) {
 	parts := strings.Split(arg, headersSeparator)
+	// If s does not contain sep and sep is not empty, Split returns a
+	// slice of length 1 whose only element is s.
+	if len(parts) == 1 && parts[0] == "" {
+		return nil, nil
+	}
+
 	headers := map[string]string{}
 
 	for _, p := range parts {
-		// If s does not contain sep and sep is not empty, Split returns a
-		// slice of length 1 whose only element is s.
-		if p == "" {
-			continue
-		}
-
-		kv := strings.Split(p, ":")
+		kv := splitEscaped(p, ':', '\\')
 		if len(kv) != 2 {
 			return nil, fmt.Errorf("invalid value: %s", p)
 		}
@@ -110,4 +110,17 @@ func parseHeaders(arg string) (map[string]string, error) {
 	}
 
 	return headers, nil
+}
+
+func splitEscaped(s string, sep, esc rune) []string {
+	var pos int
+	a := strings.FieldsFunc(s, func(r rune) bool {
+		escaped := pos > 0 && rune(s[pos-1]) == esc
+		pos++
+		return r == sep && !escaped
+	})
+	for i, s := range a {
+		a[i] = strings.ReplaceAll(s, string(esc)+string(sep), string(sep))
+	}
+	return a
 }
