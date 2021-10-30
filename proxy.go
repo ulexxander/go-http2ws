@@ -49,10 +49,13 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			p.Printf("error proxying: %v", err)
 			response = []byte(err.Error())
 		}
+
 		if err := conn.WriteMessage(websocket.TextMessage, response); err != nil {
 			p.Printf("failed to write message: %s", err)
 			return
 		}
+
+		p.Println("responding, len:", len(response))
 	}
 }
 
