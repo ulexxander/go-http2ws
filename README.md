@@ -46,5 +46,9 @@ http2ws --help
 Forward incoming websocket messages to `target-url` as HTTP `POST` requests with adding header `Content-Type:application/json` (multiple headers can be specified, see help)
 
 ```
-http2ws -addr=:4000 -target-url="http://some-http-serv" -target-method=POST -target-headers="Content-Type:application/json"
+http2ws \
+  -addr=:4000 \
+  -target-url="http://some-http-serv" \
+  -target-method=POST \
+  -target-headers="Content-Type:application/json"
 ```
