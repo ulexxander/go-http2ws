@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -41,13 +42,13 @@ func parseArgs() (*args, error) {
 	}
 
 	if *addr == "" {
-		return nil, fmt.Errorf("addr cannot be empty")
+		return nil, errors.New("addr cannot be empty")
 	}
 	if *targetURL == "" {
-		return nil, fmt.Errorf("target-url cannot be empty")
+		return nil, errors.New("target-url cannot be empty")
 	}
 	if *targetMethod == "" {
-		return nil, fmt.Errorf("target-method cannot be empty")
+		return nil, errors.New("target-method cannot be empty")
 	}
 
 	return &args{
