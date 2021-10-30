@@ -31,16 +31,12 @@ func TestProxingMessages(t *testing.T) {
 	}))
 	defer targetServ.Close()
 
-	p := http2ws.Proxy{
+	conn := dial(t, http2ws.Proxy{
 		TargetOpts: http2ws.TargetOpts{
 			Method: "GET",
 			URL:    targetServ.URL,
 		},
-	}
-	proxyServ := httptest.NewServer(&p)
-	defer proxyServ.Close()
-
-	conn := dial(t, proxyServ)
+	})
 
 	for i := 0; i < 3; i++ {
 		t.Run(fmt.Sprintf("message %d", i), func(t *testing.T) {
@@ -71,7 +67,7 @@ func TestHeaders(t *testing.T) {
 	headerKey := "Authorization"
 	headerVal := "Basic 123"
 
-	p := http2ws.Proxy{
+	conn := dial(t, http2ws.Proxy{
 		TargetOpts: http2ws.TargetOpts{
 			Method: "GET",
 			URL:    targetServ.URL,
@@ -79,11 +75,8 @@ func TestHeaders(t *testing.T) {
 				headerKey: headerVal,
 			},
 		},
-	}
-	proxyServ := httptest.NewServer(&p)
-	defer proxyServ.Close()
+	})
 
-	conn := dial(t, proxyServ)
 	err := conn.WriteMessage(websocket.TextMessage, []byte("hello"))
 	assertNoError(t, err, "writing text message")
 
@@ -98,8 +91,13 @@ func TestHeaders(t *testing.T) {
 	}
 }
 
-func dial(t *testing.T, proxyServ *httptest.Server) *websocket.Conn {
-	conn, res, err := websocket.DefaultDialer.Dial(httpToWs(proxyServ.URL), nil)
+func dial(t *testing.T, proxy http2ws.Proxy) *websocket.Conn {
+	serv := httptest.NewServer(&proxy)
+	t.Cleanup(func() {
+		serv.Close()
+	})
+
+	conn, res, err := websocket.DefaultDialer.Dial(httpToWs(serv.URL), nil)
 	assertNoError(t, err, "dialing")
 	assertStatusCode(t, res, 101)
 	t.Cleanup(func() {
@@ -108,6 +106,7 @@ func dial(t *testing.T, proxyServ *httptest.Server) *websocket.Conn {
 			t.Logf("error closing ws conn during cleanup: %v", err)
 		}
 	})
+
 	return conn
 }
 
