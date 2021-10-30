@@ -40,10 +40,7 @@ func TestProxingMessages(t *testing.T) {
 	proxyServ := httptest.NewServer(&p)
 	defer proxyServ.Close()
 
-	conn, res, err := websocket.DefaultDialer.Dial(httpToWs(proxyServ.URL), nil)
-	assertNoError(t, err, "dialing")
-	assertStatusCode(t, res, 101)
-	defer conn.Close()
+	conn := dial(t, proxyServ)
 
 	for i := 0; i < 3; i++ {
 		t.Run(fmt.Sprintf("message %d", i), func(t *testing.T) {
@@ -86,12 +83,8 @@ func TestHeaders(t *testing.T) {
 	proxyServ := httptest.NewServer(&p)
 	defer proxyServ.Close()
 
-	conn, res, err := websocket.DefaultDialer.Dial(httpToWs(proxyServ.URL), nil)
-	assertNoError(t, err, "dialing")
-	assertStatusCode(t, res, 101)
-	defer conn.Close()
-
-	err = conn.WriteMessage(websocket.TextMessage, []byte("hello"))
+	conn := dial(t, proxyServ)
+	err := conn.WriteMessage(websocket.TextMessage, []byte("hello"))
 	assertNoError(t, err, "writing text message")
 
 	select {
@@ -103,6 +96,19 @@ func TestHeaders(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatalf("not proxied in one second")
 	}
+}
+
+func dial(t *testing.T, proxyServ *httptest.Server) *websocket.Conn {
+	conn, res, err := websocket.DefaultDialer.Dial(httpToWs(proxyServ.URL), nil)
+	assertNoError(t, err, "dialing")
+	assertStatusCode(t, res, 101)
+	t.Cleanup(func() {
+		t.Log("cleanuping conn")
+		if err := conn.Close(); err != nil {
+			t.Logf("error closing ws conn during cleanup: %v", err)
+		}
+	})
+	return conn
 }
 
 func httpToWs(httpUrl string) string {
