@@ -13,21 +13,21 @@ import (
 	"github.com/ulexxander/go-http2ws"
 )
 
-func TestProxingMessages(t *testing.T) {
-	type message struct {
+func TestProxyingMessages(t *testing.T) {
+	type request struct {
 		Hello string
 	}
+	req := request{Hello: "there"}
+	requestChan := make(chan request)
 
-	msg := message{Hello: "there"}
-
-	targetChan := make(chan message)
+	res := "all good"
 
 	targetServ := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var body message
+		var body request
 		err := json.NewDecoder(r.Body).Decode(&body)
 		assertNoError(t, err, "decoding target json")
-		targetChan <- body
-		w.WriteHeader(http.StatusOK)
+		requestChan <- body
+		fmt.Fprint(w, res)
 	}))
 	defer targetServ.Close()
 
@@ -40,16 +40,22 @@ func TestProxingMessages(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		t.Run(fmt.Sprintf("message %d", i), func(t *testing.T) {
-			err := conn.WriteJSON(msg)
+			err := conn.WriteJSON(req)
 			assertNoError(t, err, "writing json payload")
 
 			select {
-			case result := <-targetChan:
-				if result.Hello != msg.Hello {
-					t.Fatalf("expected result.Hello to be %s, got: %s", msg.Hello, result.Hello)
+			case targetReq := <-requestChan:
+				if targetReq.Hello != req.Hello {
+					t.Fatalf("expected targetReq.Hello to be %s, got: %s", req.Hello, targetReq.Hello)
 				}
 			case <-time.After(time.Second):
 				t.Fatalf("not proxied in one second")
+			}
+
+			_, p, err := conn.ReadMessage()
+			assertNoError(t, err, "reading returned message")
+			if string(p) != res {
+				t.Fatalf("expected response message to be %s, got: %s", res, p)
 			}
 		})
 	}
@@ -101,7 +107,6 @@ func dial(t *testing.T, proxy http2ws.Proxy) *websocket.Conn {
 	assertNoError(t, err, "dialing")
 	assertStatusCode(t, res, 101)
 	t.Cleanup(func() {
-		t.Log("cleanuping conn")
 		if err := conn.Close(); err != nil {
 			t.Logf("error closing ws conn during cleanup: %v", err)
 		}
