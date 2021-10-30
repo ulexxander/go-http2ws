@@ -97,6 +97,29 @@ func TestHeaders(t *testing.T) {
 	}
 }
 
+func TestErrorSendingRequest(t *testing.T) {
+	conn := dial(t, http2ws.Proxy{
+		TargetOpts: http2ws.TargetOpts{
+			Method: "POST",
+			URL:    "http://something.that.doesnot.exist.abc.xyz:54323",
+		},
+		HTTPClient: http.Client{
+			Timeout: time.Millisecond,
+		},
+	})
+
+	err := conn.WriteMessage(websocket.TextMessage, []byte("hello"))
+	assertNoError(t, err, "writing text message")
+
+	_, p, err := conn.ReadMessage()
+	assertNoError(t, err, "reading returned message")
+
+	prefix := "sending request"
+	if !strings.HasPrefix(string(p), prefix) {
+		t.Fatalf("expected error message starting with %s, got: %s", prefix, p)
+	}
+}
+
 func dial(t *testing.T, proxy http2ws.Proxy) *websocket.Conn {
 	serv := httptest.NewServer(&proxy)
 	t.Cleanup(func() {
