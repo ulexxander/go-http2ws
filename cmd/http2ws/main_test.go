@@ -38,7 +38,7 @@ func TestParseHeaders(t *testing.T) {
 			err: true,
 		},
 		{
-			arg: "Host:developer.mozilla.org|Connection:keep-alive",
+			arg: "Host:developer.mozilla.org,Connection:keep-alive",
 			headers: headers{
 				"Host":       "developer.mozilla.org",
 				"Connection": "keep-alive",

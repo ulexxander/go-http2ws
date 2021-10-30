@@ -89,10 +89,10 @@ func run() error {
 	return nil
 }
 
-const headersSeparator = "|"
+const headersSeparator = ","
 
 func parseHeaders(arg string) (map[string]string, error) {
-	parts := strings.Split(arg, "|")
+	parts := strings.Split(arg, headersSeparator)
 	headers := map[string]string{}
 
 	for _, p := range parts {
