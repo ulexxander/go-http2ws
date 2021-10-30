@@ -94,12 +94,20 @@ const headersSeparator = "|"
 func parseHeaders(arg string) (map[string]string, error) {
 	parts := strings.Split(arg, "|")
 	headers := map[string]string{}
+
 	for _, p := range parts {
+		// If s does not contain sep and sep is not empty, Split returns a
+		// slice of length 1 whose only element is s.
+		if p == "" {
+			continue
+		}
+
 		kv := strings.Split(p, ":")
 		if len(kv) != 2 {
 			return nil, fmt.Errorf("invalid value: %s", p)
 		}
 		headers[kv[0]] = kv[1]
 	}
+
 	return headers, nil
 }
